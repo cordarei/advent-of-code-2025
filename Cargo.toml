@@ -1,0 +1,16 @@
+[workspace]
+members = ["src/day-*"]
+resolver = "3"
+
+[workspace.package]
+authors = ["Joseph Irwin <joseph.irwin.gt@gmail.com>"]
+edition = "2024"
+
+[workspace.dependencies]
+color-eyre = "0.6"
+nom = "8"
+tracing = "0.1.43"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"]}
+
+[profile.dev.package.backtrace]
+opt-level = 3
