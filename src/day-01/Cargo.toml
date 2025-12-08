@@ -5,3 +5,4 @@ authors.workspace = true
 
 [dependencies]
 color-eyre.workspace = true
+nom.workspace = true
