@@ -7,7 +7,7 @@ use nom::{
     multi::separated_list1,
 };
 
-pub fn process(input: &str) -> Result<i32> {
+pub fn process_part1(input: &str) -> Result<i32> {
     let turns = parse_input(input)?;
     Ok(count_zeros(&turns))
 }
