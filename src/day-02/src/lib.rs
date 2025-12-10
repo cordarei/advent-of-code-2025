@@ -1,10 +1,8 @@
 use std::ops::RangeInclusive;
-use std::{iter::Filter, slice::Windows};
 
 use color_eyre::Result;
 use nom::{
     self, IResult, Parser,
-    branch::alt,
     character::complete::{char, digit1},
     combinator::map_res,
     multi::separated_list1,
