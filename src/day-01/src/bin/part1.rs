@@ -7,6 +7,7 @@ use color_eyre::eyre::Result;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
+    tracing_subscriber::fmt::init();
 
     let mut buf = String::new();
     io::stdin().read_to_string(&mut buf)?;

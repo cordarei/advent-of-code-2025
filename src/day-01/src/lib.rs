@@ -7,9 +7,14 @@ use nom::{
     multi::separated_list1,
 };
 
-pub fn process_part1(input: &str) -> Result<i32> {
+pub fn process_part1(input: &str) -> Result<u32> {
     let turns = parse_input(input)?;
     Ok(count_zeros(&turns))
+}
+
+pub fn process_part2(input: &str) -> Result<u32> {
+    let turns = parse_input(input)?;
+    Ok(count_zero_crossings(&turns))
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -39,7 +44,7 @@ pub fn parse_input(input: &str) -> Result<Vec<Turn>> {
     Ok(turns)
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Dial {
     pub location: u8,
 }
@@ -53,19 +58,29 @@ impl Dial {
     }
 
     pub fn turn(&self, t: Turn) -> Self {
-        let new_loc = match t {
-            Turn::Left(val) => self.location as i32 - (val % 100) as i32,
-            Turn::Right(val) => self.location as i32 + (val % 100) as i32,
+        self.spin(t).0
+    }
+
+    /// return number of times the dial crosses or lands on zero
+    pub fn spin(&self, t: Turn) -> (Self, u32) {
+        let denormalized_location = match t {
+            Turn::Left(val) => self.location as isize - val as isize,
+            Turn::Right(val) => self.location as isize + val as isize,
         };
-        let new_loc = if new_loc < 0 { new_loc + 100 } else { new_loc };
-        let new_loc = new_loc % 100;
-        Self {
-            location: new_loc as u8,
-        }
+        let location = denormalized_location.rem_euclid(100) as u8;
+
+        let crossings = denormalized_location.abs() as u32 / 100
+            + if denormalized_location <= 0 && self.location != 0 {
+                1
+            } else {
+                0
+            };
+
+        (Self { location }, crossings)
     }
 }
 
-pub fn count_zeros(turns: &Vec<Turn>) -> i32 {
+pub fn count_zeros(turns: &Vec<Turn>) -> u32 {
     let (_, n) = turns.iter().fold((Dial::new(), 0), |(d, n), &t| {
         let d = d.turn(t);
         let n = if d.location == 0 { n + 1 } else { n };
@@ -74,8 +89,19 @@ pub fn count_zeros(turns: &Vec<Turn>) -> i32 {
     n
 }
 
+pub fn count_zero_crossings(turns: &Vec<Turn>) -> u32 {
+    turns
+        .iter()
+        .fold((Dial::new(), 0), |(d, n), &t| {
+            let (d, crosses) = d.spin(t);
+            (d, n + crosses)
+        })
+        .1
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::count_zero_crossings;
     use crate::count_zeros;
 
     use super::Dial;
@@ -157,5 +183,83 @@ L82",
         .unwrap();
 
         assert_eq!(count_zeros(&turns), 3);
+    }
+
+    #[test]
+    fn test_count_zero_crossings() {
+        let turns = parse_input(
+            "\
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82",
+        )
+        .unwrap();
+
+        assert_eq!(count_zero_crossings(&turns), 6);
+    }
+
+    #[test]
+    fn test_spin() {
+        assert_eq!(
+            Dial::new().spin(Turn::Left(68)),
+            (Dial::with_location(82), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(82).spin(Turn::Left(30)),
+            (Dial::with_location(52), 0)
+        );
+
+        assert_eq!(
+            Dial::with_location(52).spin(Turn::Right(48)),
+            (Dial::with_location(0), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(0).spin(Turn::Left(5)),
+            (Dial::with_location(95), 0)
+        );
+
+        assert_eq!(
+            Dial::with_location(95).spin(Turn::Right(60)),
+            (Dial::with_location(55), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(55).spin(Turn::Left(55)),
+            (Dial::with_location(0), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(0).spin(Turn::Left(1)),
+            (Dial::with_location(99), 0)
+        );
+
+        assert_eq!(
+            Dial::with_location(99).spin(Turn::Left(99)),
+            (Dial::with_location(0), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(0).spin(Turn::Right(14)),
+            (Dial::with_location(14), 0)
+        );
+
+        assert_eq!(
+            Dial::with_location(14).spin(Turn::Left(82)),
+            (Dial::with_location(32), 1)
+        );
+
+        assert_eq!(
+            Dial::with_location(50).spin(Turn::Left(1000)),
+            (Dial::with_location(50), 10)
+        );
     }
 }
