@@ -1,0 +1,10 @@
+[package]
+name = "day-05"
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+color-eyre.workspace = true
+nom.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
