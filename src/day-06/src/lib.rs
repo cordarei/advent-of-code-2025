@@ -6,7 +6,8 @@ pub fn process_part1(input: &str) -> Result<usize> {
 }
 
 pub fn process_part2(input: &str) -> Result<usize> {
-    Ok(0)
+    let problems = parse_input_part2(input)?;
+    Ok(problems.iter().map(HomeworkProblem::solve).sum())
 }
 
 #[derive(Clone, PartialEq, Debug, Copy)]
@@ -158,6 +159,42 @@ mod tests {
                 numbers: vec![356, 24, 1]
             }
         );
+
+        assert_eq!(
+            probs[1],
+            HomeworkProblem {
+                op: Op::Add,
+                numbers: vec![8, 248, 369]
+            }
+        );
+
+        assert_eq!(
+            probs[2],
+            HomeworkProblem {
+                op: Op::Mult,
+                numbers: vec![175, 581, 32]
+            }
+        );
+
+        assert_eq!(
+            probs[3],
+            HomeworkProblem {
+                op: Op::Add,
+                numbers: vec![4, 431, 623]
+            }
+        );
+    }
+
+    #[test]
+    fn test_solve() {
+        assert_eq!(
+            HomeworkProblem {
+                op: Op::Mult,
+                numbers: vec![175, 581, 32]
+            }
+            .solve(),
+            3253600
+        )
     }
 
     #[test]
@@ -167,6 +204,12 @@ mod tests {
 
     #[test]
     fn test_process_part2() {
-        assert_eq!(process_part2(TEST_INPUT).unwrap(), 14);
+        let mut input = String::new();
+        input.push_str("123 328  51 64 \n");
+        input.push_str(" 45 64  387 23 \n");
+        input.push_str("  6 98  215 314\n");
+        input.push_str("*   +   *   +  \n");
+
+        assert_eq!(process_part2(&input).unwrap(), 3263827);
     }
 }
