@@ -9,7 +9,7 @@ pub fn process_part2(input: &str) -> Result<usize> {
     Ok(0)
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Copy)]
 enum Op {
     Add,
     Mult,
@@ -61,12 +61,66 @@ fn parse_input(input: &str) -> Result<Vec<HomeworkProblem>> {
         .collect())
 }
 
+fn parse_input_part2(input: &str) -> Result<Vec<HomeworkProblem>> {
+    let rows: Vec<&str> = input.lines().collect();
+    let row_length = rows[0].len();
+    let nrows = rows.len();
+
+    let ops: Vec<Op> = rows[nrows - 1]
+        .split_ascii_whitespace()
+        .map(|s| match s {
+            "*" => Op::Mult,
+            "+" => Op::Add,
+            _ => panic!("oops"),
+        })
+        .collect();
+
+    let rows: Vec<Vec<_>> = rows
+        .iter()
+        .take(nrows - 1)
+        .map(|line| line.chars().map(|c| c.to_digit(10)).collect())
+        .collect();
+    let mut problems: Vec<HomeworkProblem> = Vec::new();
+    let mut numbers: Vec<usize> = Vec::new();
+    for i in (0..row_length).rev() {
+        let mut number: Option<usize> = None;
+        for j in 0..nrows - 1 {
+            match (number, rows[j][i]) {
+                (None, Some(digit)) => {
+                    number = Some(digit as usize);
+                }
+                (Some(val), Some(digit)) => {
+                    number = Some(val * 10 + digit as usize);
+                }
+                (_, None) => {}
+            }
+        }
+
+        if let Some(number) = number {
+            numbers.push(number);
+        } else {
+            let op_index = ops.len() - problems.len() - 1;
+            let op = ops[op_index];
+            problems.push(HomeworkProblem { numbers, op });
+            numbers = Vec::new();
+        }
+    }
+    if !numbers.is_empty() {
+        let op_index = ops.len() - problems.len() - 1;
+        let op = ops[op_index];
+        problems.push(HomeworkProblem { numbers, op });
+    }
+
+    problems.reverse();
+    Ok(problems)
+}
+
 #[cfg(test)]
 mod tests {
 
     use crate::{HomeworkProblem, Op};
 
-    use super::{parse_input, process_part1, process_part2};
+    use super::{parse_input, parse_input_part2, process_part1, process_part2};
 
     const TEST_INPUT: &str = "\
     123 328  51 64
@@ -83,6 +137,25 @@ mod tests {
             HomeworkProblem {
                 op: Op::Mult,
                 numbers: vec![123, 45, 6]
+            }
+        );
+    }
+
+    #[test]
+    fn test_parse_input_part2() {
+        let mut input = String::new();
+        input.push_str("123 328  51 64 \n");
+        input.push_str(" 45 64  387 23 \n");
+        input.push_str("  6 98  215 314\n");
+        input.push_str("*   +   *   +  \n");
+
+        let probs = parse_input_part2(&input).unwrap();
+
+        assert_eq!(
+            probs[0],
+            HomeworkProblem {
+                op: Op::Mult,
+                numbers: vec![356, 24, 1]
             }
         );
     }
